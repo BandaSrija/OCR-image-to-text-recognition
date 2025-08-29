@@ -96,10 +96,3 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 
 ### 👩‍💻 Author: Srija B
-
-
----
-
-Would you like me to also create a **`requirements.txt`** file for your repo (with the exact Python dependencies like `pytesseract`, `Pillow`, `tkinter`)? That way, others can install everything in one go.
-
----
