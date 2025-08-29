@@ -1,0 +1,315 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 126,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import cv2\n",
+    "from skimage.feature import hog\n",
+    "import numpy as np\n",
+    "from keras.models import model_from_json\n",
+    "from keras.models import load_model\n",
+    "from resizeimage import resizeimage"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from skimage.feature import hog\n",
+    "import matplotlib.pyplot as plt"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Loaded model from disk\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/site-packages/keras/engine/saving.py:292: UserWarning: No training configuration found in save file: the model was *not* compiled. Compile it manually.\n",
+      "  warnings.warn('No training configuration found in save file: '\n"
+     ]
+    }
+   ],
+   "source": [
+    "datapath = '/Users/indu/Desktop/emnist_byclass_dataset/'\n",
+    "json_file = open(datapath+'model_num.json', 'r')\n",
+    "\n",
+    "loaded_model_json = json_file.read()\n",
+    "json_file.close()\n",
+    "loaded_model = model_from_json(loaded_model_json)\n",
+    "\n",
+    "loaded_model.load_weights(datapath+\"model_num.h5\")\n",
+    "print(\"Loaded model from disk\")\n",
+    "\n",
+    "loaded_model.save('model_num.hdf5')\n",
+    "loaded_model=load_model('model_num.hdf5')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 138,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "im = cv2.imread('/Users/indu/Desktop/ind3.jpg')          # read in testing numbers image\n",
+    "imcopy=im.copy()\n",
+    "if im is None:                           # if image was not read successfully\n",
+    "    print(\"error: image not read from file \\n\\n\")       # print error message to std out\n",
+    "    os.system(\"pause\")   "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 139,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "imgGray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)\n",
+    "# cv2.imshow(\"0\", imgGray)\n",
+    "# cv2.waitKey(0)\n",
+    "# cv2.destroyAllWindows()\n",
+    "# get grayscale image\n",
+    "# minpixel=imgGray.\n",
+    "# maxpixel=\n",
+    "# imgGray=(imgGray-minpixel/(maxpixel-minpixel)*255\n",
+    "# imgGray = cv2.equalizeHist(imgGray)\n",
+    "# cv2.imshow(\"1\", imgGray)\n",
+    "# cv2.waitKey(0)\n",
+    "# cv2.destroyAllWindows()\n",
+    "imgBlurred = cv2.GaussianBlur(imgGray,(5,5), 0)                    # blur\n",
+    "# cv2.imshow(\"2\", imgBlurred)\n",
+    "# cv2.waitKey(0)\n",
+    "# cv2.destroyAllWindows()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 140,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ret,th1 = cv2.threshold(imgGray,127,255,cv2.THRESH_BINARY)                                                    # filter image from grayscale to black and white\n",
+    "imgThresh = cv2.adaptiveThreshold(imgBlurred,                           # input image\n",
+    "                                  255,                                  # make pixels that pass the threshold full white\n",
+    "                                  cv2.ADAPTIVE_THRESH_GAUSSIAN_C,       # use gaussian rather than mean, seems to give better results\n",
+    "                                  cv2.THRESH_BINARY_INV,                # invert so foreground will be white, background will be black\n",
+    "                                  11,                                   # size of a pixel neighborhood used to calculate threshold value\n",
+    "                                  2)                                    # constant subtracted from the mean or weighted mean\n",
+    "# cv2.imshow(\"3\",imgThresh)\n",
+    "# cv2.waitKey(0)\n",
+    "# cv2.destroyAllWindows()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 141,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "imgMB=cv2.medianBlur(imgThresh,5)\n",
+    "# cv2.imshow(\"4\",imgMB)\n",
+    "# cv2.waitKey(0)\n",
+    "# cv2.destroyAllWindows()\n",
+    "imgMBcopy = imgMB.copy()        # make a copy of the thresh image, this in necessary b/c findContours modifies the image\n",
+    "npaContours, npaHierarchy = cv2.findContours(imgMBcopy,             # input image, make sure to use a copy since the function will modify this image in the course of finding contours\n",
+    "                                             cv2.RETR_EXTERNAL,         # retrieve the outermost contours only\n",
+    "                                             cv2.CHAIN_APPROX_SIMPLE)   # compress horizontal, vertical, and diagonal segments and leave only their end points"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 142,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.5, 9.5, 9.5, 9.5, 9.5, 9.5, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.5, 10.5, 10.5, 10.5, 10.5, 10.5, 10.5, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 12.0, 12.0, 12.0, 12.5, 12.5, 12.5, 13.0, 13.0, 13.0, 13.0, 13.0, 14.0, 14.0, 14.0, 15.0, 16.5, 17.5, 18.0, 19.0, 19.0, 19.5, 19.5, 21.0, 23.5, 25.0, 26.5, 27.0, 29.0, 32.5, 33.5, 36.5, 39.0, 48.0, 56.5, 63.5, 79.5, 3475.0, 6187.5, 12143.5, 51924.5]\n",
+      "[(1106, 209, 232, 310), (610, 171, 346, 372)]\n"
+     ]
+    }
+   ],
+   "source": [
+    "contours=npaContours\n",
+    "contours = sorted(contours, key=cv2.contourArea)\n",
+    "areas = []\n",
+    "for c in contours:\n",
+    "    areas.append(cv2.contourArea(c))\n",
+    "print(areas) \n",
+    "rects=[]\n",
+    "Area=cv2.contourArea(contours[-1])\n",
+    "for ctr in npaContours:\n",
+    "    if cv2.contourArea(ctr)>(Area/6):\n",
+    "        rects.append(cv2.boundingRect(ctr))\n",
+    "    else:\n",
+    "        continue\n",
+    "print(rects)\n",
+    "\n",
+    "# for ctr in npaContours:\n",
+    "#     rects.append(cv2.boundingRect(ctr))\n",
+    "# print(rects)   "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 143,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rects1=sorted(rects,key = lambda rects: rects[0])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 144,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "hC\n"
+     ]
+    }
+   ],
+   "source": [
+    "labels = \"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\"\n",
+    "result=''\n",
+    "for rect in rects1:\n",
+    "    # Draw the rectangles\n",
+    "    cv2.rectangle(imcopy, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (0, 255,),2)\n",
+    "#     roi = imgMBcopy[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]\n",
+    "    pt1=rect[0]+((rect[2]-rect[3])//2)\n",
+    "    pt2=rect[0]+((rect[2]+rect[3])//2)\n",
+    "    roi= imgMBcopy[rect[1]:rect[1]+rect[3], pt1:pt2]\n",
+    "\n",
+    "    # Resize the image\n",
+    "    bord = cv2.copyMakeBorder(roi,10,10,10,10,cv2.BORDER_CONSTANT,value=[0,0,0])\n",
+    "    thresh = cv2.resize(bord, (28,28),interpolation =cv2.INTER_AREA )\n",
+    "#     cv2.imshow(\"a\",thresh)\n",
+    "#     cv2.waitKey(0)\n",
+    "#     cv2.destroyAllWindows()\n",
+    "    npaROIResized = thresh.reshape(1,28,28, 1)      # flatten image into 1d numpy array\n",
+    "    npaROIResized = npaROIResized.astype('float32')\n",
+    "    npaROIResized/=255\n",
+    "    pred = loaded_model.predict(npaROIResized.T)\n",
+    "    pred_letter=labels[int(np.argmax(pred))]\n",
+    "    result=result+pred_letter\n",
+    "    cv2.putText(imcopy,pred_letter,(rect[0],rect[1]),cv2.FONT_HERSHEY_COMPLEX_SMALL, 2, (0, 255, 255),2)\n",
+    "print(result)    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cv2.imshow(\"Resulting Image with Rectangular ROIs\", imcopy)\n",
+    "cv2.waitKey(0)\n",
+    "cv2.destroyAllWindows() "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 98,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from gtts import gTTS \n",
+    "  \n",
+    "# This module is imported so that we can  \n",
+    "# play the converted audio \n",
+    "import os"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 99,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "32256"
+      ]
+     },
+     "execution_count": 99,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Language in which you want to convert \n",
+    "language = 'en'\n",
+    "  \n",
+    "# Passing the text and language to the engine,  \n",
+    "# here we have marked slow=False. Which tells  \n",
+    "# the module that the converted audio should  \n",
+    "# have a high speed \n",
+    "myobj = gTTS(text=result, lang=language, slow=False) \n",
+    "  \n",
+    "# Saving the converted audio in a mp3 file named \n",
+    "# welcome  \n",
+    "myobj.save(\"/Users/indu/Desktop/wel.mp3\") \n",
+    "  \n",
+    "# Playing the converted file \n",
+    "os.system(\"/Users/indu/Desktop/wel.mp3\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.2"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
