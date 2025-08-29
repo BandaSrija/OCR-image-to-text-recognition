@@ -72,11 +72,9 @@ Optionally, save the text into a file
 
 ### 📌 Example
 
-Input image:
+Input image: temp1.png
 
-Extracted text:
-
-This is an OCR text extraction example.
+Extracted text: This is an OCR text extraction example.
 
 ### 🛠️ Tech Stack
 
